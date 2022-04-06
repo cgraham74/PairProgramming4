@@ -1,5 +1,7 @@
 package com.techelevator.search;
 
+import com.techelevator.util.TELog;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -20,13 +22,23 @@ public class SearchEngine {
 		this.sd = sd;
 		this.indexedWords = new HashMap<>();
 	}
-	
+
 	public void indexFiles() throws SearchEngineException, Exception {
 		// Step Five: Index files
-
+		int fileID = 0;
+		List <String> fileNames = sd.getFiles();
+		for(String s : fileNames){
+			File path = new File(sd.getFolder() + "/" + s);
+			Scanner sc = new Scanner(path);
+			while(sc.hasNextLine()){
+				indexWords(fileID, sc.nextLine());
+			}
+			fileID++;
+		}
+		TELog.log(indexedWordsToString());
 
 	}
-	
+
 	public List<String> search(String searchString) {
 		List<String> rankedFiles = new ArrayList<>();
 		String[] searchWords = searchString.trim().toLowerCase().split(" ");
@@ -38,15 +50,15 @@ public class SearchEngine {
 				if (indexedWords.containsKey(wordToFind)) {
 					for (WordLocation wl : indexedWords.get(wordToFind)) {
 						foundFiles.add(sd.getFiles().get(wl.getFileID()));
-					}	
+					}
 				}
-				rankedFiles = new ArrayList<>(foundFiles);			
+				rankedFiles = new ArrayList<>(foundFiles);
 			}
 			else {
 				// Multiple words to search, \
 				//   start by getting the distances of the first two words.
 				List<WordDistance> distances = getDistances(searchWords[0], searchWords[1]);
-				if (distances.size() > 0) {				
+				if (distances.size() > 0) {
 					for (int currentWordIndex = 1; currentWordIndex < searchWords.length - 1; currentWordIndex++) {
 						List<WordDistance> nextDistances = getDistances(searchWords[currentWordIndex], searchWords[currentWordIndex + 1]);
 						if (nextDistances.size() == 0) {
@@ -60,7 +72,7 @@ public class SearchEngine {
 									if (nextDistances.get(k).getFileID() == distances.get(m).getFileID()) {
 										foundFileID = true;
 										lastFoundIndex = m;
-									}									
+									}
 								}
 								if (foundFileID) {
 									distances.add(lastFoundIndex + 1, nextDistances.get(k));
@@ -100,7 +112,7 @@ public class SearchEngine {
 		}
 		return rankedFiles;
 	}
-	
+
 	private void indexWords(int fileID, String line) {
 		String[] words = line.split(" ");
 		for (int location = 0; location < words.length; location++) {
@@ -126,7 +138,7 @@ public class SearchEngine {
 			}
 		}
 	}
-	
+
 	private List<WordDistance> getDistances(String word, String nextWord) {
 		List<WordDistance> distances = new ArrayList<>();
 		if (indexedWords.containsKey(word) && indexedWords.containsKey(nextWord)) {
@@ -147,11 +159,11 @@ public class SearchEngine {
 		}
 		return distances;
 	}
-	
+
 	/**
 	 * Limit valid characters: only A-Z, a-z, 0-9 (implicitly trims)
 	 * Lower-case, searches are case-insensitive 
-	 * 
+	 *
 	 * @param word
 	 * @return "cleaned-up" word
 	 */
@@ -159,19 +171,19 @@ public class SearchEngine {
 		StringBuilder cleanedUpWord = new StringBuilder();
 		for (int k = 0; k < word.length(); k++) {
 			char ch = word.charAt(k);
-			if (((ch >= 'A') && (ch <= 'Z')) 
+			if (((ch >= 'A') && (ch <= 'Z'))
 					|| ((ch >= 'a')  && (ch <= 'z'))
 					|| ((ch >= '0') && (ch <= '9'))) {
 				cleanedUpWord.append(ch);
-			}						
+			}
 		}
 		return cleanedUpWord.toString().toLowerCase();
 	}
-	
+
 	/**
 	 * Convenience method to build an easy to log/display of the 
 	 * list of indexed words.
-	 * 
+	 *
 	 * @return
 	 */
 	private String indexedWordsToString() {
