@@ -60,6 +60,7 @@ public class SearchDomain {
 
 			File folder = new File(getFolder());
 			File [] fileArray = folder.listFiles();
+			assert fileArray != null;
 			for(File f : fileArray){
 				files.add(f.getName());
 			}
